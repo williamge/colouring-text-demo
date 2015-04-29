@@ -1,0 +1,415 @@
+<div id="mainContainer">
+	<div id="text-display-area">
+	</div>
+	<div id="text-enter-area" class="text-enter-hide" contenteditable="true">
+	</div>
+</div>
+
+<style>
+
+#mainContainer {
+	position: relative;
+}
+
+#text-display-area .colour-wrap {
+	/* In case a higher selector overrides these, they need to be the same as if the spans inside the area were one contiguous element of text, otherwise there will be differences in positioning between characters (between the overlapping display and enter areas)*/
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+#text-enter-area, #text-display-area {
+	line-height: 1.5em;
+	min-height: 15em;
+	border: 1px solid #ddd; 
+	position: absolute;
+	width: 100%;
+}
+
+#text-enter-area:active {
+	border: 0;
+}
+
+.text-enter-hide * {
+	opacity: 0;
+}
+
+</style>
+
+<script>
+
+var fn = function(obj) {
+	'use strict';
+	return {
+		_target: obj,
+		forEach: function(cb) {
+			return Array.prototype.forEach.call(this._target, cb);
+		},
+		map: function(cb) {
+			return Array.prototype.map.call(this._target, cb);
+		},
+		some: function(cb) {
+			return Array.prototype.some.call(this._target, cb);
+		},
+		constructAPI: function() {
+			return this._target.reduce(
+				function(api, currentWidget) {
+					Object.keys(currentWidget.modifiers).forEach(function(currentModifier) {
+						api[currentModifier] = currentWidget.modifiers[currentModifier];
+					});
+					return api;
+				}, {}
+			);
+		} 
+	};
+};
+
+(function init() {
+	'use strict';
+
+	/* IE does not support a nice contentEditable event ('input') that lets us know when a contenteditable element has changed, 
+	 * as a result we need a fallback. This fallback detects if the normal handler has run a little bit after the keypress event on 
+	 * the same element has fired, if the event has not fired then we switch to this callback, if it has then we just remove this
+	 * fallback listener and move on with our lives.
+	 */
+	function __addFallbackOnHandler(element, eventName, handler, detectEventName) {
+
+		var timeoutSet = false;
+		var shouldEventFallbackBeUsed = true;
+
+		function detectIfEventHandlerRan() {
+			if (shouldEventFallbackBeUsed) {
+				setInterval(
+					function() {
+						handler();
+					},
+					100
+				)
+			}
+		}
+
+		element.addEventListener(detectEventName, function(e) {
+			window.setTimeout(detectIfEventHandlerRan, 1000);
+			timeoutSet = true;
+		});
+
+		return function(e) {
+			shouldEventFallbackBeUsed = false;
+			handler(e);
+		}
+	}
+
+	function setUpListeners(){
+		var inputArea = document.getElementById('text-enter-area');
+		inputArea.focus();
+
+		var safeHandler = __addFallbackOnHandler(inputArea, 'keypress', HTML5ContentEditableInputHandler(inputArea), 'keypress');
+
+		inputArea.addEventListener('input', safeHandler);
+		
+		function HTML5ContentEditableInputHandler (element) {
+			return function() {
+				var enterArea = element;
+
+				var editDisplayArea = document.getElementById('text-display-area');
+
+				//Remove the old styled elements so we can add the new updatedelements cleanly
+				while (editDisplayArea.childNodes.length > 0) {
+					editDisplayArea.removeChild(editDisplayArea.childNodes[0]);
+				}
+
+				//Go through each of the input area's children and apply the colours, adding them to the display area after they are wrapped in a style
+				fn(element.childNodes).forEach(function(node) {
+					editDisplayArea.appendChild(_applyColoursRecursively(node));
+				});
+
+				//Just the function to determine what colour each word should be, up here in it's own function for visibility and to be easy to change (and to let this be dynamically changed through the page in the future)
+				function wrappingMethod(word) {
+					return ColourWrapper.baseSamplers.colourFromWordRandom(word).toCSSString();
+				}
+
+				//Recursively goes through an element and its children, wrapping words in an element for styling the colour of the word. Each element is cloned (not just copied or moved or what have you) to be suitable for adding elsewhere in the page
+				function _applyColoursRecursively(element) {
+					var clonedElement = element.cloneNode();
+
+					if (element.childNodes.length == 0) {
+						if (element.data !== undefined) {
+							var mainWrapper = document.createElement('span');
+							element.data.split(/[\s|\u00a0]/g).forEach(function(word, index, context) {
+								var wordWrapper = document.createElement('span');
+								wordWrapper.textContent = word;
+								wordWrapper.style.backgroundColor = wrappingMethod(word);
+								mainWrapper.appendChild(wordWrapper);
+
+								if (index !== context.length) {
+									var space = document.createElement('span');
+									space.textContent = ' ';
+									mainWrapper.appendChild(space);
+								}
+							});
+
+							return mainWrapper;
+						} else {
+							return clonedElement;
+						}
+					} else {
+						fn(element.childNodes).forEach(function(node) {
+							clonedElement.appendChild(_applyColoursRecursively(node));
+						});
+						return clonedElement;
+					}
+				}
+			}
+		}
+	}
+
+	setUpListeners();
+})();
+
+/******/
+
+var ColourWrapper = (function() {
+	'use strict';
+
+	function _HSL(hue, saturation, lightness) {
+		this.hue = hue;
+		this.saturation = saturation;
+		this.lightness = lightness;
+	}	
+
+	_HSL.prototype.toCSSString = function () {
+		return 'hsl(' 
+			+ this.hue 
+			+ ','
+			+ this.saturation 
+			+ '%, '
+			+ this.lightness
+			+'%)'; 
+	}
+
+	_HSL.prototype.add = function(HSLtoAdd) {
+		this.hue += HSLtoAdd.hue;
+		this.saturation += HSLtoAdd.saturation;
+		this.lightness += HSLtoAdd.lightness;
+
+		return this;
+	}
+
+	_HSL.prototype.scalarDivide = function(scalar) {
+		this.hue = this.hue / scalar;
+		this.saturation = this.saturation / scalar;
+		this.lightness = this.lightness / scalar;
+
+		return this;
+	}
+
+	_HSL.prototype.scalarMultiply = function(scalar) {
+		this.hue = this.hue * scalar;
+		this.saturation = this.saturation * scalar;
+		this.lightness = this.lightness * scalar;
+
+		return this;
+	}
+
+	function HSL(hue, saturation, lightness) {
+		return new _HSL (hue, saturation, lightness);
+	}
+
+	function randomTermGenerator(seed) {
+
+		var random = Math.sin(seed) * 1000000 ;
+		random = random - Math.floor(random);
+		
+		return random;
+	}
+
+	function changeRange(value, originalRange, newRange) {
+		if (!originalRange.length || !newRange.length) {
+			throw new Error();
+		}
+
+		newRange = newRange || [0, 1];
+
+		var baselineValue = (value - originalRange[0]) / (originalRange[1] - originalRange[0]);
+		
+		return (newRange[1] - newRange[0]) * baselineValue + newRange[0]; 
+	}
+
+
+	function hslFromSeed(seed, colourModel) {
+		colourModel = colourModel || ColourModel;
+		var randomTerm = randomTermGenerator(seed);
+		return HSL(
+			colourModel.hue(randomTerm),
+			colourModel.saturation(randomTermGenerator(randomTerm)),
+			colourModel.lightness(randomTermGenerator(randomTermGenerator(randomTerm)))
+		)
+	}
+
+	function ColourModel(mappings) {
+		mappings = mappings || {};
+		if (mappings.hue) {
+			this.hue = mappings.hue;
+		}
+		if (mappings.saturation) {
+			this.saturation = mappings.saturation;
+		}
+		if (mappings.lightness) {
+			this.lightness = mappings.lightness;
+		}
+	}
+
+	ColourModel.prototype.hue = function(term) {
+		return changeRange(term, [0, 1], [0, 360]);
+	}
+
+	ColourModel.prototype.saturation = function(term) {
+		return changeRange(term, [0, 1], [0, 100]);
+	}
+
+	ColourModel.prototype.lightness = function(term) {
+		return changeRange(term, [0, 1], [0, 100]);
+	}
+
+	var baseColourModels = {
+		plain: new ColourModel({
+			hue: function(term) {
+				return changeRange(term, [0, 1], [0, 360]);
+			},
+			saturation: function(term) {
+				return changeRange(term, [0, 1], [45, 55]);
+			},
+			lightness: function(term) {
+				return changeRange(term, [0, 1], [45, 55]);
+			}
+		}),
+		greyscale: new ColourModel({
+			hue: function(term) {
+				return changeRange(term, [0, 1], [0, 0]);
+			},
+			saturation: function(term) {
+				return changeRange(term, [0, 1], [0, 0]);
+			},
+			lightness: function(term) {
+				return changeRange(term, [0, 1], [0, 100]);
+			}
+		})		
+	};
+
+	var baseSamplers = {
+		colourFromWord: function(word, optional) {
+			optional = optional || {};
+			optional.colourModel = optional.colourModel || baseColourModels.plain;
+
+			var totalHSL = word.split('').reduce(
+				function(current, char) {
+					return current.add(
+						hslFromSeed(char.charCodeAt(0), optional.colourModel)
+					);
+				},
+				HSL(0, 0, 0)
+			);
+
+			return totalHSL.scalarDivide(word.split('').length);
+		},
+		colourFromWordRandom: function(word, optional) {
+			optional = optional || {};
+			optional.colourModel = optional.colourModel || baseColourModels.plain;
+
+			var wordSeed = word.split('').reduce(
+				function(current, char) {
+					return current + char.charCodeAt(0);
+				},
+				0
+			);
+
+			return hslFromSeed(wordSeed, optional.colourModel);
+		},
+		colourFromVowelsInWord: function(word, optional) {
+			optional = optional || {};
+			optional.colourModel = optional.colourModel || baseColourModels.plain;
+
+			var vowelsCount = 0;
+
+			var charCounts = word.split('').reduce(
+				function(counting, char) {
+					if (['a','e','i','o','u'].indexOf(char) === -1) {
+						return counting;
+					}
+
+					vowelsCount++;
+
+					if (counting[char] == null || counting[char] == undefined) {
+						counting[char] = 1
+					} else {
+						counting[char] = counting[char] + 1;
+					}
+					return counting;
+				},
+				{}
+			);
+
+			var totalHSL = Object.keys(charCounts).reduce(
+				function(current, char) {
+					return current.add(
+						hslFromSeed(char.charCodeAt(0), optional.colourModel).scalarMultiply(charCounts[char])
+					);
+				},
+				HSL(0, 0, 0)
+			);
+
+			return totalHSL.scalarDivide(vowelsCount);
+		},
+		colourFromWordRepeatsWeighted: function(word, optional) {
+			optional = optional || {};
+			optional.colourModel = optional.colourModel || baseColourModels.plain;
+
+			var totalCount = 0;
+
+			var charCounts = word.split('').reduce(
+				function(counting, char) {
+					if (counting[char] == null || counting[char] == undefined) {
+						totalCount += 1;
+						counting[char] = 1
+					} else {
+						totalCount += counting[char];
+						counting[char] = counting[char] + counting[char];
+					}
+					return counting;
+				},
+				{}
+			);
+
+			var totalHSL = Object.keys(charCounts).reduce(
+				function(current, char) {
+					return current.add(
+						hslFromSeed(char.charCodeAt(0), optional.colourModel).scalarMultiply(charCounts[char])
+					);
+				},
+				HSL(0, 0, 0)
+			);
+
+			return totalHSL.scalarDivide(totalCount);
+		},
+		lightnessFromLength: function(word, maxLength) {
+			if (maxLength > 0) {
+				var lightness = word.length / maxLength;
+				return HSL(0, 0, Math.max(0, Math.min(100 * lightness, 100)));
+			} else {
+				var lightness = (maxLength - word.length) / maxLength;
+				return HSL(0, 0, Math.max(0, Math.min(100 * lightness, 100)));
+			}
+		}
+	};
+
+	return {
+		HSL: HSL,
+		randomTermGenerator: randomTermGenerator,
+		changeRange: changeRange,
+		hslFromSeed: hslFromSeed,
+		ColourModel: ColourModel,
+		baseColourModels: baseColourModels,
+		baseSamplers: baseSamplers
+	};
+})();
+
+</script>
