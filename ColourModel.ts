@@ -49,10 +49,10 @@ module ColourModel {
                 return changeRange(term, [0, 1], [0, 360]);
             },
             saturation: function(term) {
-                return changeRange(term, [0, 1], [45, 55]);
+                return changeRange(term, [0, 1], [35, 45]);
             },
             lightness: function(term) {
-                return changeRange(term, [0, 1], [45, 55]);
+                return changeRange(term, [0, 1], [75, 85]);
             }
         }),
         greyscale: new ColourModel({
