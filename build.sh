@@ -1,0 +1,1 @@
+tsc --sourceMap --out main.js main.ts
