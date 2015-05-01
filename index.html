@@ -1,14 +1,66 @@
 <div id="mainContainer">
-	<div id="text-display-area">
-	</div>
-	<div id="text-enter-area" class="text-enter-hide" contenteditable="true">
-	</div>
+	<button id="fill-in-text">Fill in some text for me</button>
+	<section>
+		<div id="text-display-area">
+		</div>
+		<div id="text-enter-area" class="text-enter-hide" contenteditable="true">
+		</div>
+	</section>
+	<section>
+		<h1>Colouring options:</h1>
+		<ul id="sampler-list">
+		</ul>
+	</section>
 </div>
+<div id="sample-text" style="display: none">
+In presenting to you, our third edition of “The Art of Home Candy
+Making,” we can safely say, that a more complete or practical book,
+on Home Candy Making, cannot be found. We strive not only to give you
+a larger variety of the finest candies that can be made, but to make
+each recipe, so thorough and simple that anyone with a little study
+before making them, can make every piece in this book with little or no
+trouble at all.
+
+In presenting a thermometer with each book and telling you how to use
+it, we lessen the work to such an extent, that when once using one, you
+would never attempt to make candy without it. In using a thermometer
+in candy-making, all it is necessary for you to do, is to put it down
+in the kettle in the boiling candy, and when it registers the required
+degree, the candy is done and cannot possibly be wrong.
+
+Every batch you make will be just the same, as we give you the exact
+degree to cook every recipe. This book is intended for those who make
+candy at home, and does not contain a single recipe, but that may be
+made right at home in your own kitchen with a very small outlay for
+tools, other than for cooking material.
+
+We have endeavored to make all things clear to you, but we must insist
+that you read each recipe over and study it carefully before starting
+to cook, if you wish success.
+
+With this explanation we think you will agree with us that this is the
+most complete book on home candy making ever written.
+
+Hoping you will make a success of your efforts, and with our assistance
+in answering all questions you will surely do so, we remain,
+
+                                           Very Truly Yours,
+                                               THE HOME CANDY MAKERS.
+</div>		
 
 <style>
 
+body {
+	font-family: sans-serif, arial;
+}
+
 #mainContainer {
 	position: relative;
+
+	max-width: 967px;
+
+	margin-left: auto;
+	margin-right: auto;
 }
 
 #text-display-area .colour-wrap {
@@ -17,11 +69,22 @@
 	padding: 0 !important;
 }
 
+#text-enter-area {
+	position: relative;
+}
+
+#text-display-area {
+	position: absolute;
+}
+
+.space-wrapper {
+	white-space: pre;
+}
+
 #text-enter-area, #text-display-area {
 	line-height: 1.5em;
 	min-height: 15em;
 	border: 1px solid #ddd; 
-	position: absolute;
 	width: 100%;
 }
 
@@ -29,8 +92,30 @@
 	border: 0;
 }
 
+.text-enter-hide {
+	color: hsla(0, 0%, 0%, 0);
+	white-space: pre;
+}
+
 .text-enter-hide * {
 	opacity: 0;
+}
+
+#sampler-list {
+	list-style: none;
+	margin: 0.5em auto;
+	padding: 0;
+	display: table; /* ugh */
+}
+
+#sampler-list li{
+	background-color: hsl(0, 0%, 95%);
+	margin: 0.5em;
+	padding: 0.25em;
+}
+
+#sampler-list li:hover {
+	background-color: hsl(0, 0%, 85%);
 }
 
 </style>
