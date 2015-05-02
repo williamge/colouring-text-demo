@@ -21,10 +21,14 @@ module ColourWrapper {
             )
     }
 
+    interface sampler {
+        (word: string, index: number, context: any, optional?: any): HSL.HSL;
+        title ?: string;
+    }
+
     export var baseSamplers = {
-        colourFromWord: f.n(
-            function(word: string, optional ?: any): HSL.HSL {
-                optional = optional || {};
+        colourFromWord: <sampler> f.n(
+            function(word: string, index: number, context: any, optional: any = {}): HSL.HSL {
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
 
                 var totalHSL = word.split('').reduce(
@@ -41,9 +45,8 @@ module ColourWrapper {
                 title: "Colour a word through average random colours of letters"
             }
         ),
-        colourFromWordRandom: f.n(
-            function(word: string, optional ?: any): HSL.HSL {
-                optional = optional || {};
+        colourFromWordRandom: <sampler> f.n(
+            function(word: string, index: number, context: any, optional: any = {}): HSL.HSL {
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
 
                 var wordSeed = word.split('').reduce(
@@ -58,9 +61,8 @@ module ColourWrapper {
                 title: "Colour a word randomly"
             }
         ),
-        colourFromVowelsInWord: f.n(
-            function(word: string, optional ?: any): HSL.HSL {
-                optional = optional || {};
+        colourFromVowelsInWord: <sampler> f.n(
+            function(word: string, index: number, context: any, optional: any = {}): HSL.HSL {
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
 
                 var vowelsCount = 0;
@@ -97,9 +99,8 @@ module ColourWrapper {
                 title: "Colour a word from the vowels in the word"
             }
         ),
-        colourFromWordRepeatsWeighted: f.n(
-            function(word: string, optional ?: any): HSL.HSL {
-                optional = optional || {};
+        colourFromWordRepeatsWeighted: <sampler> f.n(
+            function(word: string, index: number, context: any, optional: any = {}): HSL.HSL {
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
 
                 var totalCount = 0;
@@ -131,11 +132,12 @@ module ColourWrapper {
             }).annotate({
                 title: "Colour a word through average random colours of letters, with repeat letters weighted higher"
             }
-        ),
-        lightnessFromLength: f.n(
-            function(word: string, maxLength ?: any): HSL.HSL {
-                if (maxLength == null) {
-                    maxLength = 10;
+            ),
+        lightnessFromLength: <sampler> f.n(
+            function(word: string, index: number, context: any, optional: any = {}): HSL.HSL {
+                let maxLength = 10;
+                if (optional.maxLength != null) {
+                    maxLength = optional.maxLength;
                 }
                 if (maxLength > 0) {
                     var lightness = word.length / maxLength;

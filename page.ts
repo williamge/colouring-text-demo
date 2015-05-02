@@ -56,8 +56,8 @@
             _ensureSizesMatch();
 
             //Just the function to determine what colour each word should be, up here in it's own function for visibility and to be easy to change (and to let this be dynamically changed through the page in the future)
-            function wrappingMethod(word) {
-                return colourizing.wrappingMethod(word).toCSSString();
+            function wrappingMethod(word, index, context) {
+                return colourizing.wrappingMethod(word, index, context).toCSSString();
             }
 
             function _ensureSizesMatch() {
@@ -77,13 +77,16 @@
 
             //Recursively goes through an element and its children, wrapping words in an element for styling the colour of the word. Each element is cloned (not just copied or moved or what have you) to be suitable for adding elsewhere in the page
             function _applyColoursRecursively(element) {
-                var clonedElement = element.cloneNode();
+                let clonedElement = element.cloneNode();
 
                 if (element.childNodes.length == 0) {
                     if (element.data !== undefined) {
-                        var mainWrapper = document.createElement('span');
-                        var waitingWhitespace = [];
-                        element.data.split(/(\s|\u00a0)/g).forEach(function(word, index, context) {
+                        let mainWrapper = document.createElement('span');
+                        let waitingWhitespace = [];
+
+                        let operatingList = element.data.split(/(\s|\u00a0)/g);
+
+                        operatingList.forEach(function(word, index, context) {
                             if (word === '' || /^\s|\u00a0$/g.test(word)) {
                                 waitingWhitespace.push(word);
                                 return;
@@ -98,7 +101,7 @@
 
                             var wordWrapper = document.createElement('span');
                             wordWrapper.textContent = word;
-                            wordWrapper.style.backgroundColor = wrappingMethod(word);
+                            wordWrapper.style.backgroundColor = wrappingMethod(word, index, context);
                             mainWrapper.appendChild(wordWrapper);
                         });
 
