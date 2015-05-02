@@ -21,19 +21,8 @@ module ColourWrapper {
             )
     }
 
-    function annotateFunction(func, annotations: Object): Function {
-        let _func = func;
-        for (var _annotation in annotations) {
-            if (Object.prototype.hasOwnProperty.call(annotations, _annotation)) {
-                _func[_annotation] = annotations[_annotation];
-            }
-        }
-
-        return _func;
-    }
-
     export var baseSamplers = {
-        colourFromWord: annotateFunction(
+        colourFromWord: f.n(
             function(word: string, optional ?: any): HSL.HSL {
                 optional = optional || {};
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
@@ -48,11 +37,11 @@ module ColourWrapper {
                     );
 
                 return totalHSL.scalarDivide(word.split('').length);
-            }, {
+            }).annotate({
                 title: "Colour a word through average random colours of letters"
             }
         ),
-        colourFromWordRandom: annotateFunction(
+        colourFromWordRandom: f.n(
             function(word: string, optional ?: any): HSL.HSL {
                 optional = optional || {};
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
@@ -65,11 +54,11 @@ module ColourWrapper {
                     );
 
                 return hslFromSeed(wordSeed, optional.colourModel);
-            }, {
+            }).annotate({
                 title: "Colour a word randomly"
             }
         ),
-        colourFromVowelsInWord: annotateFunction(
+        colourFromVowelsInWord: f.n(
             function(word: string, optional ?: any): HSL.HSL {
                 optional = optional || {};
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
@@ -104,11 +93,11 @@ module ColourWrapper {
                     );
 
                 return totalHSL.scalarDivide(vowelsCount);
-            }, {
+            }).annotate({
                 title: "Colour a word from the vowels in the word"
             }
         ),
-        colourFromWordRepeatsWeighted: annotateFunction(
+        colourFromWordRepeatsWeighted: f.n(
             function(word: string, optional ?: any): HSL.HSL {
                 optional = optional || {};
                 optional.colourModel = optional.colourModel || ColourModel.baseColourModels.plain;
@@ -139,11 +128,11 @@ module ColourWrapper {
                     );
 
                 return totalHSL.scalarDivide(totalCount);
-            }, {
+            }).annotate({
                 title: "Colour a word through average random colours of letters, with repeat letters weighted higher"
             }
         ),
-        lightnessFromLength: annotateFunction(
+        lightnessFromLength: f.n(
             function(word: string, maxLength ?: any): HSL.HSL {
                 if (maxLength == null) {
                     maxLength = 10;
@@ -155,7 +144,7 @@ module ColourWrapper {
                     var lightness = (maxLength - word.length) / maxLength;
                     return new HSL.HSL(0, 0, Math.max(0, Math.min(100 * lightness, 100)));
                 }
-            }, {
+            }).annotate({
                 title: "Shade a word from the length of the word"
             }
         )
