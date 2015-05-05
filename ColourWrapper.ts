@@ -21,7 +21,7 @@ module ColourWrapper {
             )
     }
 
-    interface sampler {
+    export interface sampler {
         (word: string, index: number, context: any, optional?: any): HSL.HSL;
         title ?: string;
     }
